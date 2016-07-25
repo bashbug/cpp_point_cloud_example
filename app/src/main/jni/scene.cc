@@ -49,9 +49,9 @@ void Scene::InitGLContent() {
   grid_ = new tango_gl::Grid();
   point_cloud_ = new PointCloudDrawable();
 
-  mesh_ = new tango_gl::Mesh(GL_POINTS);
-  mesh_->SetShader();
-  mesh_->SetColor(1.0, 0.0, 0.0);
+  //mesh_ = new tango_gl::Mesh(GL_POINTS);
+  //mesh_->SetShader();
+  //mesh_->SetColor(1.0, 0.0, 0.0);
 
 
   trace_->SetColor(kTraceColor);
@@ -103,7 +103,8 @@ void Scene::SetupViewPort(int w, int h) {
 }
 
 void Scene::Render(const glm::mat4& cur_pose_transformation,
-                   const std::vector<float>& point_cloud_vertices) {
+                   const std::vector<float>& point_cloud_vertices,
+                   const std::vector<uint8_t>& point_cloud_colors) {
 
 
   glm::mat4 curr_T_opengl = tango_gl::conversions::opengl_world_T_tango_world()*cur_pose_transformation;
@@ -149,12 +150,11 @@ void Scene::Render(const glm::mat4& cur_pose_transformation,
   grid_->Render(gesture_camera_->GetProjectionMatrix(),
                 gesture_camera_->GetViewMatrix());
 
-  mesh_->SetVertices(point_cloud_vertices);
-  mesh_->SetTransformationMatrix(mm);
-  mesh_->Render(gesture_camera_->GetProjectionMatrix(), gesture_camera_->GetViewMatrix());
-
-  /*point_cloud_->Render(gesture_camera_->GetProjectionMatrix(),
-                       gesture_camera_->GetViewMatrix(), point_cloud_vertices);*/
+  point_cloud_->Render(gesture_camera_->GetProjectionMatrix(),
+                       gesture_camera_->GetViewMatrix(),
+                       cur_pose_transformation,
+                       point_cloud_vertices,
+                       point_cloud_colors);
 }
 
 void Scene::SetCameraType(tango_gl::GestureCamera::CameraType camera_type) {

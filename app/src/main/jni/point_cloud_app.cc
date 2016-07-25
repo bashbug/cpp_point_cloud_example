@@ -37,6 +37,7 @@ namespace tango_point_cloud {
 
   void PointCloudApp::onFrameAvailable(const TangoImageBuffer* buffer) {
     TangoSupport_updateImageBuffer(yuv_manager_, buffer);
+    //LOGE("buffer stride %i", buffer->stride);
   }
 
   void PointCloudApp::onPointCloudAvailable(const TangoXYZij* xyz_ij) {
@@ -228,11 +229,13 @@ namespace tango_point_cloud {
     } else {
       color_image.width = image_buffer->width;
       color_image.height = image_buffer->height;
-      color_image.stride = image_buffer->stride;
+      color_image.stride = 1280;
       color_image.timestamp = image_buffer->timestamp;
       color_image.format = (Tango3DR_ImageFormatType)image_buffer->format;
       color_image.data = image_buffer->data;
     }
+
+    //LOGE("stride %i", image_buffer->stride);
 
     TangoPoseData pointcloud_pose_tmp, imagebuffer_pose_tmp, current_pose;
     Tango3DR_Pose pointcloud_pose, imagebuffer_pose;
@@ -273,13 +276,13 @@ namespace tango_point_cloud {
     }
 
     // Passing with nullptr and the current mesh will be rendered
-    Tango3DR_Status status = Tango3DR_update(context_, &pointcloud, &pointcloud_pose,
-                                             nullptr, nullptr, nullptr, &gridindexarray_);
+    /*Tango3DR_Status status = Tango3DR_update(context_, &pointcloud, &pointcloud_pose,
+                                             nullptr, nullptr, nullptr, &gridindexarray_);*/
 
     // Passing with Tango3DR_ImageBuffer a TANGO_3DR_INVALID error will be returned
-    /*Tango3DR_Status status = Tango3DR_update(context_, &pointcloud, &pointcloud_pose,
+    Tango3DR_Status status = Tango3DR_update(context_, &pointcloud, &pointcloud_pose,
                                              &color_image, &imagebuffer_pose, &color_camera_,
-                                             &gridindexarray_);*/
+                                             &gridindexarray_);
 
     if (status == TANGO_3DR_ERROR) {
       LOGE("UPDATE STATUS some sort of hard error occurred");
@@ -313,13 +316,17 @@ namespace tango_point_cloud {
           size_t point_cloud_size = mesh_->num_vertices * 3;
           std::vector<GLfloat> vertices_tmp;
           std::vector<float> vertices;
+          std::vector<uint8_t> colors;
           if (mesh_->num_vertices > 0) {
               for (int i=0; i<mesh_->num_vertices; i++) {
                   vertices.push_back(mesh_->vertices[i][0]);
                   vertices.push_back(mesh_->vertices[i][1]);
                   vertices.push_back(mesh_->vertices[i][2]);
+                  colors.push_back(mesh_->colors[i][0]);
+                  colors.push_back(mesh_->colors[i][1]);
+                  colors.push_back(mesh_->colors[i][2]);
               }
-              main_scene_.Render(GetMatrixFromPose(current_pose), vertices);
+              main_scene_.Render(GetMatrixFromPose(current_pose), vertices, colors);
           }
       }
     }

@@ -37,8 +37,11 @@ class PointCloudDrawable {
   // @param projection_mat: projection matrix from current render camera.
   // @param view_mat: view matrix from current render camera.
   // @param vertices: all vertices in this point cloud frame.
-  void Render(glm::mat4 projection_mat, glm::mat4 view_mat,
-              const std::vector<float>& vertices);
+  void Render(glm::mat4 projection_mat,
+              glm::mat4 view_mat,
+              glm::mat4 model_mat,
+              const std::vector<float>& vertices,
+              const std::vector<uint8_t>& colors);
 
  private:
   // Vertex buffer of the point cloud geometry.
@@ -52,6 +55,9 @@ class PointCloudDrawable {
 
   // Handle to the model view projection matrix uniform in the shader.
   GLuint mvp_handle_;
+
+  GLuint color_handle_;
+  GLuint color_buffers_;
 };
 }  // namespace tango_point_cloud
 

@@ -20,23 +20,25 @@
 #include "tango-point-cloud/point_cloud_drawable.h"
 
 namespace {
-const std::string kPointCloudVertexShader =
-    "precision mediump float;\n"
-    "precision mediump int;\n"
-    "attribute vec4 vertex;\n"
-    "uniform mat4 mvp;\n"
-    "varying vec4 v_color;\n"
-    "void main() {\n"
-    "  gl_Position = mvp*vertex;\n"
-    "  v_color = vertex;\n"
-    "}\n";
-const std::string kPointCloudFragmentShader =
-    "precision mediump float;\n"
-    "precision mediump int;\n"
-    "varying vec4 v_color;\n"
-    "void main() {\n"
-    "  gl_FragColor = vec4(v_color);\n"
-    "}\n";
+  const std::string kPointCloudVertexShader =
+      "precision mediump float;\n"
+          "precision mediump int;\n"
+          "attribute vec4 vertex;\n"
+          "attribute vec3 color;\n"
+          "uniform mat4 mvp;\n"
+          "varying vec3 v_color;\n"
+          "void main() {\n"
+          "  gl_PointSize = 3.0;\n"
+          "  gl_Position = mvp*vertex;\n"
+          "  v_color = color;\n"
+          "}\n";
+  const std::string kPointCloudFragmentShader =
+      "precision mediump float;\n"
+          "precision mediump int;\n"
+          "varying vec3 v_color;\n"
+          "void main() {\n"
+          "  gl_FragColor = vec4(vec3(v_color), 1.0);\n"
+          "}\n";
 
 }  // namespace
 
@@ -48,7 +50,9 @@ PointCloudDrawable::PointCloudDrawable() {
 
   mvp_handle_ = glGetUniformLocation(shader_program_, "mvp");
   vertices_handle_ = glGetAttribLocation(shader_program_, "vertex");
+  color_handle_ = glGetAttribLocation(shader_program_, "color");
   glGenBuffers(1, &vertex_buffers_);
+  glGenBuffers(1, &color_buffers_);
 }
 
 void PointCloudDrawable::DeleteGlResources() {
@@ -60,26 +64,34 @@ void PointCloudDrawable::DeleteGlResources() {
   }
 }
 
-void PointCloudDrawable::Render(glm::mat4 projection_mat, glm::mat4 view_mat,
-                                const std::vector<float>& vertices) {
-  glUseProgram(shader_program_);
-  mvp_handle_ = glGetUniformLocation(shader_program_, "mvp");
+void PointCloudDrawable::Render(glm::mat4 projection_mat,
+                                glm::mat4 view_mat,
+                                glm::mat4 model_mat,
+                                const std::vector<float>& vertices,
+                                const std::vector<uint8_t>& colors) {
+      glUseProgram(shader_program_);
+      mvp_handle_ = glGetUniformLocation(shader_program_, "mvp");
 
-  // Calculate model view projection matrix.
-  glm::mat4 mvp_mat = projection_mat * view_mat;
-  glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+      // Calculate model view projection matrix.
+      glm::mat4 mvp_mat = projection_mat * view_mat * model_mat;
+      glUniformMatrix4fv(mvp_handle_, 1, GL_FALSE, glm::value_ptr(mvp_mat));
+      glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers_);
+      glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+      glEnableVertexAttribArray(vertices_handle_);
+      glVertexAttribPointer(vertices_handle_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glBindBuffer(GL_ARRAY_BUFFER, vertex_buffers_);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * vertices.size(),
-               vertices.data(), GL_STATIC_DRAW);
-  glEnableVertexAttribArray(vertices_handle_);
-  glVertexAttribPointer(vertices_handle_, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
+      glBindBuffer(GL_ARRAY_BUFFER, color_buffers_);
+      glBufferData(GL_ARRAY_BUFFER, colors.size(), colors.data(), GL_STATIC_DRAW);
+      glEnableVertexAttribArray(color_handle_);
+      // index, size, type, stride, normalized, pointer
+      glVertexAttribPointer(color_handle_, 3, GL_UNSIGNED_BYTE, GL_TRUE, 0, nullptr);
+      glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  glDrawArrays(GL_POINTS, 0, vertices.size() / 3);
+      glDrawArrays(GL_POINTS, 0, vertices.size() / 3);
 
-  glUseProgram(0);
-  tango_gl::util::CheckGlError("Pointcloud::Render()");
+      glUseProgram(0);
+      tango_gl::util::CheckGlError("Pointcloud::Render()");
 }
 
 }  // namespace tango_point_cloud

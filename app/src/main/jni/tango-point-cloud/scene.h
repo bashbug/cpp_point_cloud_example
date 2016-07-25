@@ -32,7 +32,8 @@
 #include <tango-gl/trace.h>
 #include <tango-gl/transform.h>
 #include <tango-gl/util.h>
-#include <tango-gl/mesh.h>
+//#include <tango-gl/mesh.h>
+#include <tango-point-cloud/point_cloud_drawable.h>
 
 #include <tango-point-cloud/point_cloud_drawable.h>
 
@@ -61,7 +62,8 @@ class Scene {
   // @param: point_cloud_vertices, point cloud's vertices of the current point
   //         frame.
   void Render(const glm::mat4& cur_pose_transformation,
-              const std::vector<float>& point_cloud_vertices);
+              const std::vector<float>& point_cloud_vertices,
+              const std::vector<uint8_t>& point_cloud_colors);
 
   // Set render camera's viewing angle, first person, third person or top down.
   //
@@ -103,7 +105,7 @@ class Scene {
   // Point cloud drawale object.
   PointCloudDrawable* point_cloud_;
 
-  tango_gl::Mesh* mesh_;
+  //tango_gl::Mesh* mesh_;
 };
 }  // namespace tango_point_cloud
 
