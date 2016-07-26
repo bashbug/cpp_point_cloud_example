@@ -41,11 +41,12 @@ class PointCloudDrawable {
               glm::mat4 view_mat,
               glm::mat4 model_mat,
               const std::vector<float>& vertices,
+              const std::vector<unsigned int>& indices,
               const std::vector<uint8_t>& colors);
 
  private:
   // Vertex buffer of the point cloud geometry.
-  GLuint vertex_buffers_;
+  GLuint vertex_buffer_;
 
   // Shader to display point cloud.
   GLuint shader_program_;
@@ -57,7 +58,10 @@ class PointCloudDrawable {
   GLuint mvp_handle_;
 
   GLuint color_handle_;
-  GLuint color_buffers_;
+  GLuint color_buffer_;
+
+  GLuint indices_handle_;
+  GLuint indices_buffer_;
 };
 }  // namespace tango_point_cloud
 

@@ -275,11 +275,6 @@ namespace tango_point_cloud {
         imagebuffer_pose.translation[2] = imagebuffer_pose_tmp.translation[2];
     }
 
-    // Passing with nullptr and the current mesh will be rendered
-    /*Tango3DR_Status status = Tango3DR_update(context_, &pointcloud, &pointcloud_pose,
-                                             nullptr, nullptr, nullptr, &gridindexarray_);*/
-
-    // Passing with Tango3DR_ImageBuffer a TANGO_3DR_INVALID error will be returned
     Tango3DR_Status status = Tango3DR_update(context_, &pointcloud, &pointcloud_pose,
                                              &color_image, &imagebuffer_pose, &color_camera_,
                                              &gridindexarray_);
@@ -294,9 +289,7 @@ namespace tango_point_cloud {
       LOGE("UPDATE STATUS input argument is invalid");
     }
     if (status == TANGO_3DR_SUCCESS) {
-      LOGE("UPDATE STATUS success");
-
-      status = Tango3DR_extractMesh(context_, gridindexarray_, &mesh_);
+      status = Tango3DR_extractFullMesh(context_, &mesh_);
 
       if (status == TANGO_3DR_ERROR) {
           LOGE("EXTRACT STATUS some sort of hard error occurred");
@@ -311,13 +304,11 @@ namespace tango_point_cloud {
       }
 
       if (status == TANGO_3DR_SUCCESS) {
-          LOGE("EXTRACT STATUS success");
-
-          size_t point_cloud_size = mesh_->num_vertices * 3;
-          std::vector<GLfloat> vertices_tmp;
           std::vector<float> vertices;
+          std::vector<unsigned int> indices;
           std::vector<uint8_t> colors;
-          if (mesh_->num_vertices > 0) {
+
+          if (mesh_->num_faces > 0) {
               for (int i=0; i<mesh_->num_vertices; i++) {
                   vertices.push_back(mesh_->vertices[i][0]);
                   vertices.push_back(mesh_->vertices[i][1]);
@@ -326,7 +317,13 @@ namespace tango_point_cloud {
                   colors.push_back(mesh_->colors[i][1]);
                   colors.push_back(mesh_->colors[i][2]);
               }
-              main_scene_.Render(GetMatrixFromPose(current_pose), vertices, colors);
+
+              for (int i=0; i<mesh_->num_faces; i++) {
+                indices.push_back((unsigned int)mesh_->faces[i][0]);
+                indices.push_back((unsigned int)mesh_->faces[i][1]);
+                indices.push_back((unsigned int)mesh_->faces[i][2]);
+              }
+              main_scene_.Render(GetMatrixFromPose(current_pose), vertices, indices, colors);
           }
       }
     }
